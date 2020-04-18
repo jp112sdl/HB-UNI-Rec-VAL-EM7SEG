@@ -39,18 +39,11 @@ class RcvDev : public Device<HalType, DefList0>, Alarm {
     DefList0 l0;
 public:
     typedef Device<HalType, DefList0> BaseDevice;
-    RcvDev (const DeviceInfo& i, uint16_t addr) : BaseDevice(i, addr, l0, 0), Alarm(0), l0(addr) {}
+    RcvDev (const DeviceInfo& i, uint16_t addr) : BaseDevice(i, addr, l0, 0), Alarm(seconds2ticks(UNREACH_INTERVAL_SEC)), l0(addr) {}
     virtual ~RcvDev () {}
 
-
-    void setUnreach() {
-      em7seg.displayWord("----");
-    }
-
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
-      set(seconds2ticks(UNREACH_INTERVAL_SEC));
-      clock.add(*this);
-      setUnreach();
+      em7seg.displayWord("----");
     }
 
     virtual bool process(Message& msg) {
@@ -59,10 +52,13 @@ public:
       uint8_t MessageType = msg.type();
 
       if (msg.from() == ListenID && MessageType == LISTEN_FOR_TYPE) {
-        DPRINTLN("Received Message");
-        sysclock.cancel(*this);
-        sysclock.add(*this);
+        DPRINT("Received Message (");DDEC(millis());DPRINTLN(")");
+
         this->led().ledOn(millis2ticks(500));
+
+        sysclock.cancel(*this);
+        set(seconds2ticks(UNREACH_INTERVAL_SEC));
+        sysclock.add(*this);
 
         if ( (msg.length() - 9) < (PAYLOAD_LENGTH + PAYLOAD_START_IDX)  ) {
           DPRINT(F("Payload too short: Payload length ="));DDEC(msg.length() - 9);DPRINT(", PAYLOAD_START_IDX = ");DDEC(PAYLOAD_START_IDX);DPRINT(", PAYLOAD_LENGTH = ");DDECLN(PAYLOAD_LENGTH);
@@ -106,7 +102,7 @@ RcvDev sdev(devinfo, 0x20);
 void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
   em7seg.init();
-  delay(200);
+  em7seg.displayWord("InIt");
   sdev.init(hal);
 }
 
