@@ -18,7 +18,13 @@ uint8_t LISTEN_FOR_TYPE       = 0x53;
 #define PAYLOAD_START_IDX     2
 #define PAYLOAD_LENGTH        4
 
-EM7ModuleArray em7seg;
+typedef EM7ModuleArray<4> EM7Mod;
+
+static const uint8_t EM7_ADDR_TOP[4] = {0x20,0x21,0x22,0x23};
+static const uint8_t EM7_ADDR_BOT[4] = {0x24,0x25,0x26,0x27};
+
+EM7Mod em7segTOP;
+EM7Mod em7segBOT;
 
 // all library classes are placed in the namespace 'as'
 using namespace as;
@@ -43,7 +49,8 @@ public:
     virtual ~RcvDev () {}
 
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
-      em7seg.displayWord("----");
+      em7segTOP.displayWord("----");
+      em7segBOT.displayWord("----");
     }
 
     virtual bool process(Message& msg) {
@@ -79,7 +86,7 @@ public:
 
         DPRINT("Liter = ");DDECLN(liter);
 
-        em7seg.displayNumber(liter, false, true);
+        em7segTOP.displayNumber(liter, false, true);
       }
 
       return true;
@@ -101,8 +108,10 @@ RcvDev sdev(devinfo, 0x20);
 
 void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
-  em7seg.init();
-  em7seg.displayWord("InIt");
+  em7segTOP.init(EM7_ADDR_TOP);
+  em7segBOT.init(EM7_ADDR_BOT);
+  em7segTOP.displayWord("InIt");
+  em7segBOT.displayWord("InIt");
   sdev.init(hal);
 }
 

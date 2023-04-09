@@ -256,6 +256,7 @@ public:
   }
 };
 
+template <uint8_t moduleCount>
 class EM7ModuleArray {
 protected:
   EM7Module<MCP23017Type> em7Module[8];
@@ -264,7 +265,7 @@ private:
   uint8_t mod_cnt = 0;
   uint16_t dly = 0;
 public:
-  uint8_t init(uint8_t ENABLE_PIN=0) {
+  uint8_t init(const uint8_t * addrArray, const uint8_t ENABLE_PIN=0) {
     if (ENABLE_PIN != 0) {
       pinMode(ENABLE_PIN, OUTPUT);
       digitalWrite(ENABLE_PIN, HIGH);
@@ -274,8 +275,8 @@ public:
     }
 
     Wire.begin();
-    for (uint8_t i = 0; i < 8; i++) {
-      uint8_t addr = 0x20 + i;
+    for (uint8_t i = 0; i < moduleCount; i++) {
+      uint8_t addr = addrArray[i];
       Wire.beginTransmission(addr);
       if (Wire.endTransmission() == 0) {
         pf(F("Found module[%d] at address %#01x\n"), mod_cnt, addr);
